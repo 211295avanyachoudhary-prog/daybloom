@@ -630,7 +630,60 @@ body.dark-mode .sb-link.active{background:rgba(107,175,138,0.12);}
 </nav>
 
 <!-- ══ LAYOUT GRID ══ -->
-<div id="layout">
+
+<!-- ══ NAME ENTRY SCREEN ══ -->
+<div id="name-screen" style="
+  position:fixed;inset:0;z-index:999;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(145deg,#E8F5EC,#F5F0EC,#EFF5F0);
+">
+  <!-- gingham bg -->
+  <div style="position:absolute;inset:0;opacity:0.07;background-image:repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(107,175,138,0.6) 18px,rgba(107,175,138,0.6) 20px),repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(107,175,138,0.6) 18px,rgba(107,175,138,0.6) 20px);pointer-events:none;"></div>
+  <!-- meadow strip bottom -->
+  <div style="position:absolute;bottom:0;left:0;right:0;height:180px;opacity:0.45;background:var(--meadow-url,none) bottom/cover no-repeat;pointer-events:none;" id="ns-meadow"></div>
+
+  <div style="
+    position:relative;z-index:1;
+    background:rgba(255,255,255,0.88);backdrop-filter:blur(24px);
+    border:1px solid rgba(107,175,138,0.3);border-radius:28px;
+    padding:48px 44px;width:420px;max-width:92vw;
+    box-shadow:0 12px 48px rgba(28,43,34,0.14);
+    text-align:center;
+    animation:nsSlide 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  ">
+    <style>@keyframes nsSlide{from{opacity:0;transform:translateY(28px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}</style>
+    <div style="font-size:52px;margin-bottom:8px">🌸</div>
+    <div style="font-family:var(--font-sc);font-size:38px;color:var(--primary-d);line-height:1;margin-bottom:6px">DayBloom</div>
+    <div style="font-family:var(--font-c);font-size:15px;color:var(--text2);font-style:italic;margin-bottom:32px">Your life is a garden. Let it grow.</div>
+
+    <div style="text-align:left;margin-bottom:8px">
+      <label style="font-family:var(--font-h);font-size:11px;font-weight:700;color:var(--text2);letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:8px">Your Name</label>
+      <input id="ns-name-input" type="text" placeholder="e.g. Avanya" maxlength="30"
+        onkeydown="if(event.key==='Enter')enterGarden()"
+        style="width:100%;padding:14px 16px;font-family:var(--font);font-size:15px;
+               background:#F7F5F2;border:1.5px solid rgba(107,175,138,0.3);
+               border-radius:14px;color:#1C2B22;outline:none;transition:all 0.2s;
+               box-shadow:inset 0 2px 6px rgba(28,43,34,0.04);"
+        onfocus="this.style.borderColor='var(--primary-d)';this.style.boxShadow='0 0 0 4px rgba(107,175,138,0.15)'"
+        onblur="this.style.borderColor='rgba(107,175,138,0.3)';this.style.boxShadow='inset 0 2px 6px rgba(28,43,34,0.04)'">
+    </div>
+    <div style="font-family:var(--font-c);font-size:12px;color:var(--text3);font-style:italic;margin-bottom:28px;text-align:left;">You'll receive a special flower name 🌺</div>
+
+    <button onclick="enterGarden()" style="
+      width:100%;padding:15px;border:none;border-radius:14px;
+      background:linear-gradient(135deg,#6BAF8A,#8BC4A0);
+      color:white;font-family:var(--font-h);font-size:15px;font-weight:700;
+      cursor:pointer;letter-spacing:0.03em;
+      box-shadow:0 6px 20px rgba(107,175,138,0.45);
+      transition:all 0.2s;
+    "
+    onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 28px rgba(107,175,138,0.58)'"
+    onmouseout="this.style.transform='';this.style.boxShadow='0 6px 20px rgba(107,175,138,0.45)'"
+    >Enter My Garden 🌿</button>
+  </div>
+</div>
+
+<div id="layout" style="display:none">
 
   <!-- SIDEBAR (desktop) -->
   <nav id="sidebar">
@@ -1038,7 +1091,7 @@ const DEFAULT_HABITS = [
 ];
 
 let state = {
-  user: 'Avanya',
+  user: null,
   flowerName: null,
   flowerAvatar: null,
   tasks: [],
@@ -1078,22 +1131,38 @@ function load() {
 /* ════ BOOT ════ */
 window.addEventListener('DOMContentLoaded', () => {
   load();
-  if(!state.flowerName) {
-    state.flowerName = FLOWER_NAMES[Math.floor(Math.random()*FLOWER_NAMES.length)];
-    state.flowerAvatar = FLOWER_AVATARS[Math.floor(Math.random()*FLOWER_AVATARS.length)];
-    save();
-  }
   if(!state.habits) state.habits = JSON.parse(JSON.stringify(DEFAULT_HABITS));
-  checkStreak();
   applyTheme();
-  updateUserUI();
-  renderHomeSeeds();
-  renderTasks();
-  renderGrowth();
-  renderHabits();
-  focusLeft = focusWork*60; focusTotal = focusWork*60;
-  updateFocusDisplay(focusLeft, focusTotal);
-  updateFocusDots();
+
+  if(!state.user) {
+    // Show name screen, hide app
+    document.getElementById('layout').style.display = 'none';
+    document.getElementById('mob-nav').style.display = 'none';
+    document.getElementById('mob-bottom').style.display = 'none';
+    document.getElementById('mob-fab').style.display = 'none';
+    setTimeout(() => {
+      const inp = document.getElementById('ns-name-input');
+      if(inp) inp.focus();
+    }, 400);
+  } else {
+    // Returning user — hide name screen, show app
+    document.getElementById('name-screen').style.display = 'none';
+    document.getElementById('layout').style.display = '';
+    if(!state.flowerName) {
+      state.flowerName = FLOWER_NAMES[Math.floor(Math.random()*FLOWER_NAMES.length)];
+      state.flowerAvatar = FLOWER_AVATARS[Math.floor(Math.random()*FLOWER_AVATARS.length)];
+      save();
+    }
+    checkStreak();
+    updateUserUI();
+    renderHomeSeeds();
+    renderTasks();
+    renderGrowth();
+    renderHabits();
+    focusLeft = focusWork*60; focusTotal = focusWork*60;
+    updateFocusDisplay(focusLeft, focusTotal);
+    updateFocusDots();
+  }
 });
 
 /* ════ NAV ════ */
@@ -1508,7 +1577,41 @@ function toggleTheme(){ state.darkMode=!state.darkMode; save(); applyTheme(); }
 function toggleSwitch(id){ document.getElementById(id).classList.toggle('on'); }
 
 /* ════ LOGOUT ════ */
-function doLogout(){ if(!confirm('Leave your garden? 🌿')) return; state.user='Avanya'; save(); toast('See you soon 🌸'); }
+function enterGarden(){
+  const input = document.getElementById('ns-name-input');
+  const name = (input ? input.value.trim() : '') || 'Gardener';
+  state.user = name;
+  state.flowerName = FLOWER_NAMES[Math.floor(Math.random()*FLOWER_NAMES.length)];
+  state.flowerAvatar = FLOWER_AVATARS[Math.floor(Math.random()*FLOWER_AVATARS.length)];
+  save();
+  document.getElementById('name-screen').style.display = 'none';
+  document.getElementById('layout').style.display = '';
+  document.getElementById('mob-nav').style.display = '';
+  document.getElementById('mob-bottom').style.display = '';
+  document.getElementById('mob-fab').style.display = '';
+  updateUserUI();
+  renderHomeSeeds();
+  renderTasks();
+  renderGrowth();
+  renderHabits();
+}
+
+function doLogout(){
+  if(!confirm('Leave your garden? 🌿')) return;
+  // Clear user so name screen shows again
+  state.user = null;
+  state.flowerName = null;
+  state.flowerAvatar = null;
+  save();
+  // Hide app, show name screen
+  document.getElementById('layout').style.display = 'none';
+  document.getElementById('mob-nav').style.display = 'none';
+  document.getElementById('mob-bottom').style.display = 'none';
+  document.getElementById('mob-fab').style.display = 'none';
+  document.getElementById('name-screen').style.display = 'flex';
+  const inp = document.getElementById('ns-name-input');
+  if(inp){ inp.value = ''; inp.focus(); }
+}
 
 /* ════ TOAST ════ */
 function toast(msg){
